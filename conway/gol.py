@@ -1,5 +1,11 @@
+#!/usr/bin/python
+
 from os import system
 import time
+import argparse
+from os.path import exists
+import csv
+from sys import exit
 
 class Cell(object):
 	"""A cell on the board"""
@@ -122,22 +128,44 @@ class Board(object):
 					print ' ',
 			print "\n",
 
+# Checks that the CSV file exists, and converts it to a list of tuples if it does.
+# If it doesn't, it returns an error message. Also returns an error message if
+# the CSV file is corrupted.
+def parse_csv(args):
+	if exists(args.file):
+		csvfile = open(args.file, "rb")
+		reader = csv.reader(csvfile)
+		grand_list = []
+		for line in reader:
+			try:
+				new_line = map(int,line)
+			except Exception, e:
+				return "The CSV file is corrupted."
+
+			new_line = tuple(new_line)
+			grand_list.append(new_line)
+
+		csvfile.close()
+		return grand_list
+	else:
+		return "There is no file in that location."
+
 def main():
-	# Set one of the below to be called 'input_state', then watch it go!
-	glider = [(2,3),(4,3),(3,4),(4,4),(3,5)]
-	two_gliders_same_track = [(2,3),(4,3),(3,4),(4,4),(3,5),(10,11),(12,11),(11,12),(12,12),(11,13)]
-	two_gliders_vertical = [(7,3),(9,3),(8,4),(9,4),(8,5),(2,3),(4,3),(3,4),(4,4),(3,5)]
-	toad = [(1,1),(2,1),(3,1),(0,2),(1,2),(2,2)]
-	blinker = [(1,1),(2,1),(3,1)]
-	block = [(1,1),(2,1),(1,2),(2,2)]
-	lightweight_spaceship = [(2,2),(5,2),(6,3),(2,4),(6,4),(3,5),(4,5),(5,5),(6,5)]
-	figure_of_8 = [(3,3),(4,3),(5,3),(3,4),(4,4),(5,4),(3,5),(4,5),(5,5),(6,6),(7,6),(8,6),(6,7),(7,7),(8,7),(6,8),(7,8),(8,8)]
-	glider_gun_vertical = [(2,6),(3,6),(2,7),(3,7),(12,6),(12,7),(12,8),(13,5),(13,9),(14,4),(14,10),(15,4),(15,10),(16,7),(17,5),(17,9),(18,6),(18,7),(18,8),(19,7),(22,4),(22,5),(22,6),(23,4),(23,5),(23,6),(24,3),(24,7),(26,2),(26,3),(26,7),(26,8),(36,4),(36,5),(37,4),(37,5)]
-	input_state = [(6,2),(6,3),(7,2),(7,3),(6,12),(7,12),(8,12),(5,13),(9,13),(4,14),(10,14),(4,15),(10,15),(7,16),(5,17),(9,17),(6,18),(7,18),(8,18),(7,19),(4,22),(5,22),(6,22),(4,23),(5,23),(6,23),(3,24),(7,24),(2,26),(3,26),(7,26),(8,26),(4,36),(5,36),(4,37),(5,37)]
+	# Takes in the CSV file as an argument.
+	parser = argparse.ArgumentParser()
+	parser.add_argument("file", help="Enter the CSV file path from which to start the game.")
+	args = parser.parse_args()
+
+	input_state = parse_csv(args)
+	
+	# Exits with an error message if there is no file.
+	if type(input_state) == str:
+		print input_state
+		exit(-1)
 	
 	while True:
 		# Board takes in the input state and the size of the board (x,y)
-		board = Board(input_state,60,60)
+		board = Board(input_state,40,40)
 		input_state = board.return_new_board()
 		board.print_board()
 		time.sleep(0.1)
